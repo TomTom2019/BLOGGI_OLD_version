@@ -1,0 +1,228 @@
+CREATE ROUTES FOLDER INSIDE CREATE FOLDER API PUT ARTICLES.JS  USERS.JS
+CREATE MODELS FOLDER INSIDE PUT ARTICLE_MODEL.JS USER_MODEL.js
+//
+**START WITH USER_MODEL.JS**
+
+validate(value){   // WORK WITH VALIDATOR
+    if(!validator.isEmail(value)){
+        throw new Error('Invalid email')
+    }
+}
+
+role:{
+    type:String,
+    enum:['user','admin'],// USER OR ADMIN
+    default: 'user' // NEW USER WILL BE USER
+},
+
+   collection: "player" CANT CHANGE NAME HERE PLAYER OR SOCCER ECT
+
+//
+EXPORT ==> const User = mongoose.model('User', userSchema);
+module.exports = { User }
+
+** GO TO ROUTES API USERS.JS**
+
+IMPORT const { User } = require('../../models/user_model');
+
+router.route("/register")// YOU CAN CHAINE HERE
+.post((req,res)=>{
+  res.status(200).send('ok') // CHECK IT WORK IN POSTMAN
+})
+.post((req.res)=>{
+
+})
+
+module.exports = router;  DONT FORGET EXPORT AND IMPORT  SERVER.JS
+
+**GO TO SERVER.JS**
+const users = require("./routes/api/users"); // IS A MIDDLEWARE
+//
+app.use(bodyParser.json());
+app.use("/api/users", users);
+
+***BACK TO API USER.JS ****
+/// 2 creating the model ( hash password)
+const user = new User({
+  email: req.body.email,
+  password: req.body.password,
+});
+
+**BACK TO MODEL USER.JS ****
+userSchema.pre("save", async function (next) {
+  let user = this;
+  if (user.isModified("password")) {
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(user.password, salt);// HASH PASS WITH SALT
+    user.password = hash; // PASSWORD EGUAL HASH
+  }
+  next();
+  });
+***BACK TO API USER.JS AND USER_MODEL***
+// 1 CHECK IF EMAIL TAKEN
+// 2 CREATING MODEL  HASH PASSWORD
+// 3 GENERATE TOKEN
+// 4 SEND EMAIL
+// SAVE... SEND TOKEN WITH COOKIE
+TEST POSTAMAN http://localhost:3002/api/users/register
+
+// SAVE... SEND TOKEN WITH COOKIE  WORK WITH GET INFORMATION ABOUT USER
+//GET INFORMATION ABOUT USER
+res.cookie("x-access-token", token).status(200).send(getUserProps(doc));
+} catch (error) {
+res.status(400).json({ message: "Error", error: error });
+}
+});
+// GET INFORMATION ABOUT USER
+const getUserProps = (user) => {
+  return {
+    _id: user._id,
+    email: user.email,
+    firstname: user.firstname,
+    lastname: user.lastname,
+    age: user.age,
+    role: user.role,
+  };
+};
+
+module.exports = router;
+**BACK TO MODEL USER.JS AND API USER ****
+// SIGN IN
+// COMPARE PASSWORD
+// GENERATE TOKEN
+//RESPONSE
+TEST POSTMAN http://localhost:3002/api/users/signin
+
+
+***GO TO MIDDLEWARE AUTH.JS***
+exports.checkToken = async(req, res, next) => {
+    try{
+        if(req.headers["x-access-token"]){
+            // VERIFY TOKEN
+            const accessToken = req.headers["x-access-token"];
+            const { _id,email,exp } = jwt.verify(accessToken, process.env.DB_SECRET);
+
+      //  console.log(_id)
+      //  console.log(email)
+      //  console.log(exp)
+            res.locals.userData = await User.findById(_id);
+            next()
+        } else{
+            next();
+        }
+    } catch(error){
+        return res.status(401).json({error:"Bad token",errors:error})
+    }
+}
+GO TO POSTMAN http://localhost:3002/api/users/profile
+***GO TO CONFIG ROLES.JS AND MIDDLEWARE ROLES.JS WORK WITH API USER.JS***
+*** PROFILE***
+==>const AccessControl = require('accesscontrol');
+
+let grantsObject = {
+    admin:{
+        profile:{
+            'create:any': ['*'],  // ['!*'] BLOCK ACCES
+            'read:any': ['*'],
+            'update:any': ['*'],
+            'delete:any': ['*']
+        },
+        articles:{
+            'read:any': ['*'],
+        },
+        article:{
+            'create:any': ['*'],
+            'read:any': ['*'],
+            'update:any': ['*'],
+            'delete:any': ['*']
+        }
+    },
+    user:{  // USER SAME AS USERMODEL  NO S
+        profile:{  // ! CANT GET PASSWORD ID DATE  != cant
+            'read:own': ['*','!password','!_id','!date'],
+            'update:own': ['*'],
+        }
+    }
+}
+
+const roles = new AccessControl(grantsObject);
+module.exports = { roles }
+
+*** GO TO API SERVER .PATCH***
+GO TO POSTMAN http://localhost:3002/api/users/profile?
+*** UPDATE EMAIL ***
+GO TO POSTMAN http://localhost:3002/api/users/update_email
+//
+//
+*** GO ARTICLE_MODEL.JS WORH WITH API ARTICLE_MODEL.JS ***
+==>  status:{ //*** IMPORTANT FOR PUBLIC OR
+      type: String,
+      required:true,
+      enum:['draft','public'],
+      default: 'draft',
+      index:true
+  },
+
+***  API ARTICLE_MODEL.JS ***
+GO TO POSTMAN POST REQUEST http://localhost:3002/api/articles/admin/add_articles
+MAKE CHANGE MODELS
+{
+    "title":" 2is simply dummy text of the printing",
+    "content":"<p> is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen boo</p>",
+    "excerpt":"is simply dummy text of the printing and typesetting industry",
+       "score":"50",  CANT DELETE
+    "director":"ggggggggggggggggggg", DELETE
+    "actors":["rambo","pani"], DELETE
+    "status":"public", OK
+    "date":"" OK
+
+}
+
+// **ADMIN GET PATCH DELETE SINGLE ARTICLE (DRAFT or PUBLIC)**
+
+GOT POSTMAN http://localhost:3002/api/articles/admin/6166cb6a9355e61d7cfeaa20
+patch http://localhost:3002/api/articles/admin/6166cb6a9355e61d7cfeaa20
+
+
+/// NO AUH REQUIRED PUBLIC ////
+
+// **FESH ARTICLE LOAD MORE  IN CONFIG CREATE HELPERS.JS**
+// {SORTBY:"_ID",ORDER:"ASC",LIMIT:10,SKIP:0}
+
+GOT TO POSTMAN TO WRITE BELOW
+{
+  "sortBy":"_id",
+  "order":"asc",
+  "limit":10,
+  "skip":0
+}
+
+// **PAGINATION**
+//GO TO ARTICLE_MODEL.JS AD PLUGIN
+router
+  .route("/admin/paginate")
+  .post(checkLoggedIn, grantAccess("readAny", "articles"), async (req, res) => {
+    try {
+      // let aggQuery = Article.aggregate([
+      //     { $match: { status:"public" }},
+      //     { $match: { title:{ $regex:/Lorem/ }}}
+      // ])
+
+      const limit = req.body.limit ? req.body.limit : 5;// CANT CHANGE 6 7 ECT
+      const aggQuery = Article.aggregate();
+      const options = {
+        page: req.body.page,
+        limit,
+        sort: { _id: "asc" },
+      };
+
+      const articles = await Article.aggregatePaginate(aggQuery, options);
+      res.status(200).json(articles);
+    } catch (error) {
+      res.status(400).json({ message: "Error", error });
+    }
+  });
+
+// FOR CONTACT GMAIL INSTALL DONT FORGET .ENV
+npm i nodemailer
+npm i mailgen

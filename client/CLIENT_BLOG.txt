@@ -1,0 +1,290 @@
+****Snippets*****
+_i→	import empty
+_ir→	import react
+_irc→	import react and component
+_irp→	import react and prop-types
+_ipt→	import prop-types
+_ircp→	import react, component and prop-types
+_ird→	import react-dom
+_irs→	import react and useState
+_ire→	import react and useEffect
+_irse→	import react, useState and useEffect
+
+**FOR HAVE ALL FILES BABEL JSX
+customFileTypes:
+      "source.js.jsx": [
+        "js"
+      ]
+
+
+** KEEP APP.JS  INDEX.JS CHANGE ROUTES.JS**
+START BELOW
+==>import React, { useEffect, useState  } from 'react';
+import { Switch, Route,BrowserRouter} from 'react-router-dom';
+import GoogleFontLoader from 'react-google-font-loader';
+
+import Home from './components/home';
+
+  return(
+    <BrowserRouter>
+          <Switch>
+            <Route path="/" component={Home}/>
+          </Switch>
+    </BrowserRouter>
+  )
+}
+export default Routes;
+
+//** STORE REDUX**
+START WITH INDEX.JS INSIDE STORE
+CREATE ALL REDUCER AND IMPORT TO INDEX.JS
+//** GO TO NAVIGATION HEADER.JS**
+//** HOME INDEX.JS CHANGE TO BOOSTRAP**
+//ARTICLECARD.JS
+
+// **REACT TOASTIFY
+//  ******MOST OF WORK IS IN REDUX AND DISPATCH*******
+1 *****ACTION.index
+==>export const clearNotification = () => {
+  return (dispatch) => {
+    dispatch({
+      type: CLEAR_NOTIFICATION,
+    });
+  };
+};
+2******* GO TO TYPE.JS
+==>export const CLEAR_NOTIFICATION = "clear_notification";
+
+3***** GO TO REDUCER NOTIFICATION.JS
+==>  case CLEAR_NOTIFICATION:
+    return {};
+4******* GO TO HEADER.JS
+==  useEffect(() => {
+    if (notifications && notifications.error) {
+      const msg = notifications.msg ? notifications.msg : "Error";
+      showToast("ERROR", msg);
+      dispatch(clearNotification());
+    }
+    if (notifications && notifications.success) {
+      const msg = notifications.msg ? notifications.msg : "Good job!!";
+      showToast("SUCCESS", msg);
+      dispatch(clearNotification());
+    }
+  }, [notifications, dispatch]);
+
+//***LOGIN REGISTER FROM**
+1** action index.js
+2**TYPES.JS
+3**users_actions.js
+
+// SIGN IN
+GOT TO USERS_ACTIONS
+==>export const signInUser = (values) => {
+  return async (dispatch) => {
+    try {
+      const user = await axios.post(`/api/users/signin`, {
+        email: values.email,
+        password: values.password,
+      });
+
+      dispatch(users.authUser({ data: user.data, auth: true }));
+      dispatch(users.successGlobal("Welcome !!"));
+    } catch (error) {
+      dispatch(users.errorGlobal(error.response.data.message));
+    }
+  };
+};
+
+//***AUTO SIGN IN USERS
+UTILS +> TOOLS.JS
+==>export const getTokenCookie = () => cookie.load("x-access-token");
+export const removeTokenCookie = () =>
+  cookie.remove("x-access-token", { path: "/" });
+
+export const getAuthHeader = () => {
+  return { headers: { "x-access-token": getTokenCookie() } };
+};
+
+
+//**CREATING A LOADER
+UTILS +> LOAGER.JS
+==>const Loader = () => (
+  <div className="root_loader">
+    <CircularProgress />
+  </div>
+);
+
+export default Loader;
+//**LOGOUT USERS
+ACTION +> USERS_ACTIONS
+==>export const signOut = () => {
+  return async (dispatch) => {
+    removeTokenCookie();
+    dispatch(users.signOut());
+  };
+};
+
+//**ADMIN LAYOUT
+HEADER
+==>  useEffect(() => {
+    let pathArray = props.location.pathname.split("/");
+    if (pathArray[1] === "dashboard") {
+      setLayout("dash_layout");
+      dispatch(appLayout("dash_layout"));
+    } else {
+      setLayout("");
+      dispatch(appLayout(""));
+    }
+  }, [props.location.pathname, dispatch]);
+//**ROUTES GUARD
+ROUTERS
+<MainLayout>
+  <Switch>
+    <Route
+      path="/dashboard/articles/edit/:id"
+      component={AuthGuard(EditArticle, true)} TRUE IS ROLECHECK
+    />
+    <Route
+      path="/dashboard/articles/add"
+      component={AuthGuard(AddArticle, true)}
+    />
+    <Route
+      path="/dashboard/articles"
+      component={AuthGuard(Articles, true)}
+    />
+
+
+
+//** GUARDING NAV LINK
+==>NAVIGATIONS    AND HOC ADMINlAYOUT
+
+==>  {!users.auth ? (
+    <ListItem
+      button
+      component={RouterLink}
+      to="/auth"
+      onClick={() => setState(false)}
+    >
+      <ListItemIcon>
+        <VpnKeyIcon />
+      </ListItemIcon>
+      <ListItemText primary="Sign in" />
+    </ListItem>
+  ) : (
+    <ListItem
+      button
+      onClick={() => {
+        signOutUser();
+        setState(false);
+      }}
+    >
+
+//PreventAuthRoute
+HOC
+==>const PreventAuthRoute = (props) => {
+    const users = useSelector(state=> state.users);
+
+    return(
+        <>
+          { users.auth ?
+            <Redirect to="/dashboard"/>
+          :
+            props.children
+          }
+        </>
+    )
+}
+
+export default PreventAuthRoute;
+
+//** CREATING THE ARTICLE SECTION
+ARTICLE SECTION.JS GO TO REDUX
+
+//**TEST UPLOAD**
+==>import React, { useDebugValue } from 'react';
+import AdminLayout from '../../../hoc/adminLayout';
+import {Form,Button} from 'react-bootstrap';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import axios from 'axios';
+
+
+
+//**TEST UPLOAD** CLIENT
+const TestUpload = () => {
+
+    const formik = useFormik({
+        initialValues:{archivo:''},
+        validationSchema: Yup.object({
+            archivo: Yup.mixed().required('A file is required')
+        }),
+        onSubmit:(values)=>{
+            let formData = new FormData();
+            formData.append("file",values.archivo )
+
+            /// multer
+            // axios.post('/api/files/multerupload',formData,{
+            //     header:{'content-type':'multipart/form-data'}
+            // }).then(response=>{
+            //     console.log(response)
+            // }).catch(error=>{
+            //     console.log(error)
+            // })
+
+            /// cloudinary
+            axios.post('/api/files/testupload',formData,{
+                header:{'content-type':'multipart/form-data'}
+            }).then(response=>{
+                console.log(response)
+            }).catch(error=>{
+                console.log(error)
+            })
+        }
+    })
+
+    const errorHelper = (formik, values) => ({
+        error: formik.errors[values] && formik.touched[values] ? true:false,
+        helperText: formik.errors[values] && formik.touched[values] ? formik.errors[values] : null
+    });
+
+    return(
+        <AdminLayout section="Test upload">
+            <Form onSubmit={formik.handleSubmit}>
+                <Form.Group>
+                    <Form.File
+                        id="file"
+                        name="file"
+                        label="Example file input"
+                        onChange={(event)=>{
+                            formik.setFieldValue("archivo", event.target.files[0])
+                        }}
+                    />
+                    {
+                        formik.errors.archivo && formik.touched.archivo ?
+                            <>Error</>
+                        :null
+                    }
+                </Form.Group>
+                <Button variant="primary" type="submit">
+                    Submit
+                </Button>
+            </Form>
+        </AdminLayout>
+    )
+}
+
+export default TestUpload;
+
+
+
+
+
+//**TEST UPLOAD** SERVER
+==> npm i multer
+==> npm i express-formidable
+
+
+
+
+
+//
